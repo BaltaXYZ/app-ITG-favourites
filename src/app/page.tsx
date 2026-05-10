@@ -99,6 +99,10 @@ function levelClass(difficulty: Difficulty) {
   return `level-pill level-${difficulty.replace("/", "-")}`;
 }
 
+function difficultyMeterClass(difficulty: Difficulty) {
+  return `difficulty-meter difficulty-meter-${difficulty.replace("/", "-")}`;
+}
+
 function createDefaultDraft(): CustomSegmentDraft[] {
   return [
     {
@@ -973,13 +977,21 @@ function SessionView({
 
       <section className="song-stage">
         <div className="song-stage-inner">
-          <div className="song-kicker">
+          <div className="song-meta-bar">
             {current?.type === "song" ? (
-              <span className={levelClass(current.difficulty)}>{current.difficulty}</span>
+              <div className={difficultyMeterClass(current.difficulty)}>
+                <span>Svårighet</span>
+                <strong>{current.difficulty}</strong>
+              </div>
             ) : (
-              <span className="pill">Uppvärmning</span>
+              <div className="difficulty-meter warmup-meter">
+                <span>Moment</span>
+                <strong>Värm upp</strong>
+              </div>
             )}
-            <span>{targetReached ? "Målet är uppnått - klicka klart för att avsluta" : `Låt ${current?.ordinal ?? 1}`}</span>
+            <div className="song-rail">
+              <span>{targetReached ? "Målet är uppnått - klicka klart för att avsluta" : `Låt ${current?.ordinal ?? 1}`}</span>
+            </div>
           </div>
           <h1 className="song-title">
             {current?.type === "warmup" ? current.label : current?.song.title}
