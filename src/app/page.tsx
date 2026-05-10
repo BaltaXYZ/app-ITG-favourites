@@ -377,7 +377,7 @@ export default function Home() {
             <Clock size={18} aria-hidden="true" />
           </div>
           <PresetInput
-            label="Mål­tid, minuter"
+            label="Tid"
             value={targetMinutes}
             presets={targetMinutePresets}
             minimum={1}
@@ -529,7 +529,7 @@ function StartView({
 
         <section className="start-controls" aria-label="Passinställningar">
           <PresetInput
-            label="Mål­tid, minuter"
+            label="Tid"
             value={targetMinutes}
             presets={targetMinutePresets}
             minimum={1}
