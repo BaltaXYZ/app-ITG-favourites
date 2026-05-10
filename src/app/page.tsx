@@ -55,7 +55,6 @@ const templates = PASS_TEMPLATES;
 const FIXED_WARMUP_SONG_COUNT = 4;
 const targetMinuteRange = {
   min: 30,
-  max: 90,
   step: 15
 };
 
@@ -398,6 +397,7 @@ export default function Home() {
     return (
       <StartView
         targetMinutes={targetMinutes}
+        maxTargetMinutes={selectedTemplate.targetMinutes}
         selectedTemplateId={selectedTemplateId}
         onTargetMinutesChange={setTargetMinutes}
         onTemplateSelect={selectTemplate}
@@ -536,6 +536,7 @@ export default function Home() {
 
 function StartView({
   targetMinutes,
+  maxTargetMinutes,
   selectedTemplateId,
   onTargetMinutesChange,
   onTemplateSelect,
@@ -543,6 +544,7 @@ function StartView({
   onAdvanced
 }: {
   targetMinutes: number;
+  maxTargetMinutes: number;
   selectedTemplateId: string;
   onTargetMinutesChange: (value: number) => void;
   onTemplateSelect: (template: PassPlan) => void;
@@ -589,7 +591,7 @@ function StartView({
           ))}
         </section>
 
-        <TimeSlider value={targetMinutes} onChange={onTargetMinutesChange} />
+        <TimeSlider value={targetMinutes} max={maxTargetMinutes} onChange={onTargetMinutesChange} />
 
         <section className="start-actions">
           <button className="primary-button start-button" onClick={onStart}>
@@ -604,7 +606,15 @@ function StartView({
   );
 }
 
-function TimeSlider({ value, onChange }: { value: number; onChange: (value: number) => void }) {
+function TimeSlider({
+  value,
+  max,
+  onChange
+}: {
+  value: number;
+  max: number;
+  onChange: (value: number) => void;
+}) {
   return (
     <section className="time-slider" aria-label="Tid">
       <div className="time-slider-header">
@@ -613,7 +623,7 @@ function TimeSlider({ value, onChange }: { value: number; onChange: (value: numb
       </div>
       <input
         aria-label="Tid i minuter"
-        max={targetMinuteRange.max}
+        max={max}
         min={targetMinuteRange.min}
         step={targetMinuteRange.step}
         type="range"
@@ -622,7 +632,7 @@ function TimeSlider({ value, onChange }: { value: number; onChange: (value: numb
       />
       <div className="time-slider-scale" aria-hidden="true">
         {Array.from(
-          { length: (targetMinuteRange.max - targetMinuteRange.min) / targetMinuteRange.step + 1 },
+          { length: (max - targetMinuteRange.min) / targetMinuteRange.step + 1 },
           (_, index) => targetMinuteRange.min + index * targetMinuteRange.step
         ).map((minute) => (
           <span key={minute}>{minute}</span>
