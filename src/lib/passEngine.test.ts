@@ -7,7 +7,12 @@ import {
   difficultyForStrategy,
   startPass
 } from "./passEngine";
-import { parseStoredPlans, serializeStoredPlans } from "./storage";
+import {
+  deleteStoredPlan,
+  loadStoredPlansWithSeed,
+  parseStoredPlans,
+  serializeStoredPlans
+} from "./storage";
 import type { Difficulty, PassPlan, Song } from "./types";
 
 const BASE_PLAN: PassPlan = {
@@ -173,6 +178,26 @@ describe("passEngine", () => {
     expect(JSON.parse(rawValue)).toMatchObject({ version: 1 });
     expect(parsedPlans).toEqual([BASE_PLAN]);
   });
+
+  it("seeds default saved plans only once", () => {
+    const storage = memoryStorage();
+    const seedPlans = [
+      BASE_PLAN,
+      {
+        ...BASE_PLAN,
+        id: "second-plan",
+        name: "Andra passet"
+      }
+    ];
+
+    const seededPlans = loadStoredPlansWithSeed(storage, seedPlans);
+    expect(seededPlans.map((plan) => plan.id)).toEqual(["test-plan", "second-plan"]);
+
+    deleteStoredPlan(storage, "test-plan");
+    deleteStoredPlan(storage, "second-plan");
+
+    expect(loadStoredPlansWithSeed(storage, seedPlans)).toEqual([]);
+  });
 });
 
 function libraryWithCounts(counts: Partial<Record<Difficulty, number>>) {
@@ -216,4 +241,18 @@ function currentSongTitle(session: ReturnType<typeof startPass>): string | undef
 
 function currentDifficulty(session: ReturnType<typeof startPass>): Difficulty | undefined {
   return session.currentItem?.type === "song" ? session.currentItem.difficulty : undefined;
+}
+
+function memoryStorage() {
+  const values = new Map<string, string>();
+
+  return {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => {
+      values.set(key, value);
+    },
+    removeItem: (key: string) => {
+      values.delete(key);
+    }
+  };
 }

@@ -1,15 +1,15 @@
 "use client";
 
 import {
-  BookOpen,
+  ArrowLeft,
   Check,
   Clock,
-  ListMusic,
+  FilePlus2,
   Pause,
+  Pencil,
   Play,
   Plus,
   Save,
-  Shuffle,
   SlidersHorizontal,
   Trash2
 } from "lucide-react";
@@ -19,7 +19,6 @@ import {
   PASS_TEMPLATES,
   activeSegmentAt,
   advancePass,
-  countSongsByDifficulty,
   createProgressiveTopTemplate,
   createSongLibrary,
   getElapsedMs,
@@ -29,13 +28,13 @@ import {
 } from "../lib/passEngine";
 import {
   deleteStoredPlan,
-  loadStoredPlans,
+  loadStoredPlansWithSeed,
   upsertStoredPlan
 } from "../lib/storage";
 import { DIFFICULTIES, type Difficulty, type PassPlan, type PassSegment, type PassSession, type SegmentStrategy, type Song } from "../lib/types";
 
-type BuilderMode = "templates" | "custom";
-type AppView = "start" | "advanced";
+type AppView = "start" | "manage";
+type ManageScreen = "home" | "list" | "editor";
 type StrategyType = SegmentStrategy["type"];
 
 type CustomSegmentDraft = {
@@ -50,8 +49,8 @@ type CustomSegmentDraft = {
 
 const songs = songData.songs as Song[];
 const library = createSongLibrary(songs);
-const counts = countSongsByDifficulty(songs);
 const templates = PASS_TEMPLATES;
+const initialPassPlans = [templates[0], templates[1], createProgressiveTopTemplate("11")];
 const FIXED_WARMUP_SONG_COUNT = 4;
 const targetMinuteRange = {
   min: 30,
@@ -210,6 +209,56 @@ function strategyFromDraft(draft: CustomSegmentDraft): SegmentStrategy {
   };
 }
 
+function draftsFromPlan(plan: PassPlan): CustomSegmentDraft[] {
+  if (plan.segments.length === 0) {
+    return createDefaultDraft();
+  }
+
+  return plan.segments.map((segment) => {
+    const baseDraft = {
+      id: makeId("segment"),
+      untilMinute: segment.untilMinute,
+      primary: "9" as Difficulty,
+      secondary: "10" as Difficulty,
+      sequence: "9,10",
+      weights: { ...defaultWeights }
+    };
+
+    switch (segment.strategy.type) {
+      case "single":
+        return {
+          ...baseDraft,
+          strategyType: "single" as StrategyType,
+          primary: segment.strategy.difficulty
+        };
+      case "alternate":
+        return {
+          ...baseDraft,
+          strategyType: "alternate" as StrategyType,
+          primary: segment.strategy.difficulties[0],
+          secondary: segment.strategy.difficulties[1]
+        };
+      case "sequence":
+        return {
+          ...baseDraft,
+          strategyType: "sequence" as StrategyType,
+          primary: segment.strategy.difficulties[0] ?? baseDraft.primary,
+          secondary: segment.strategy.difficulties[1] ?? baseDraft.secondary,
+          sequence: segment.strategy.difficulties.join(",")
+        };
+      case "weighted":
+        return {
+          ...baseDraft,
+          strategyType: "weighted" as StrategyType,
+          weights: {
+            ...defaultWeights,
+            ...segment.strategy.weights
+          }
+        };
+    }
+  });
+}
+
 function customDraftToPlan({
   drafts,
   name,
@@ -263,11 +312,11 @@ function clonePlanForRun(plan: PassPlan, overrides: { targetMinutes: number; war
 
 export default function Home() {
   const [appView, setAppView] = useState<AppView>("start");
-  const [builderMode, setBuilderMode] = useState<BuilderMode>("templates");
+  const [manageScreen, setManageScreen] = useState<ManageScreen>("home");
   const [targetMinutes, setTargetMinutes] = useState(60);
   const warmupSongCount = FIXED_WARMUP_SONG_COUNT;
-  const [selectedTemplateId, setSelectedTemplateId] = useState(templates[0].id);
-  const [progressiveFinal, setProgressiveFinal] = useState<"11" | "12-13">("11");
+  const [selectedPlanId, setSelectedPlanId] = useState("");
+  const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
   const [customName, setCustomName] = useState("Eget danspass");
   const [customDrafts, setCustomDrafts] = useState<CustomSegmentDraft[]>(() => createDefaultDraft());
   const [savedPlans, setSavedPlans] = useState<PassPlan[]>([]);
@@ -278,8 +327,25 @@ export default function Home() {
   const [statusMessage, setStatusMessage] = useState("");
 
   useEffect(() => {
-    setSavedPlans(loadStoredPlans(window.localStorage));
+    const plans = loadStoredPlansWithSeed(window.localStorage, initialPassPlans);
+    setSavedPlans(plans);
+    setSelectedPlanId(plans[0]?.id ?? "");
+    setTargetMinutes(plans[0]?.targetMinutes ?? 60);
   }, []);
+
+  useEffect(() => {
+    if (savedPlans.length === 0) {
+      if (selectedPlanId) {
+        setSelectedPlanId("");
+      }
+      return;
+    }
+
+    if (!savedPlans.some((plan) => plan.id === selectedPlanId)) {
+      setSelectedPlanId(savedPlans[0].id);
+      setTargetMinutes(savedPlans[0].targetMinutes);
+    }
+  }, [savedPlans, selectedPlanId]);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -290,45 +356,60 @@ export default function Home() {
     return () => window.clearInterval(id);
   }, [pausedAtMs]);
 
-  const selectedTemplate = useMemo(() => {
-    if (selectedTemplateId.startsWith("template-progressiv")) {
-      return createProgressiveTopTemplate(progressiveFinal);
-    }
-    return templates.find((template) => template.id === selectedTemplateId) ?? templates[0];
-  }, [progressiveFinal, selectedTemplateId]);
+  const selectedPlan = useMemo(
+    () => savedPlans.find((plan) => plan.id === selectedPlanId) ?? savedPlans[0] ?? null,
+    [savedPlans, selectedPlanId]
+  );
 
-  const activePlan = useMemo(() => {
-    const basePlan =
-      builderMode === "templates"
-        ? selectedTemplate
-        : customDraftToPlan({
-            drafts: customDrafts,
-            name: customName,
-            targetMinutes,
-            warmupSongCount
-          });
-    return clonePlanForRun(basePlan, { targetMinutes, warmupSongCount });
-  }, [builderMode, customDrafts, customName, selectedTemplate, targetMinutes, warmupSongCount]);
+  const editorPlan = useMemo(() => {
+    const draftPlan = customDraftToPlan({
+      drafts: customDrafts,
+      name: customName,
+      targetMinutes,
+      warmupSongCount
+    });
+    const existingPlan = editingPlanId
+      ? savedPlans.find((plan) => plan.id === editingPlanId)
+      : undefined;
 
-  function applyTemplate(plan: PassPlan) {
-    setBuilderMode("templates");
-    setSelectedTemplateId(plan.id);
+    return {
+      ...draftPlan,
+      id: editingPlanId ?? draftPlan.id,
+      source: editingPlanId ? "saved" : "custom",
+      createdAt: existingPlan?.createdAt
+    } satisfies PassPlan;
+  }, [customDrafts, customName, editingPlanId, savedPlans, targetMinutes, warmupSongCount]);
+
+  function selectStartPlan(plan: PassPlan) {
+    setSelectedPlanId(plan.id);
     setTargetMinutes(plan.targetMinutes);
   }
 
-  function selectTemplate(plan: PassPlan) {
-    setBuilderMode("templates");
-    setSelectedTemplateId(plan.id);
-    setTargetMinutes(plan.targetMinutes);
-  }
-
-  function startCurrentPass(plan = activePlan) {
+  function startCurrentPass(plan: PassPlan) {
     const started = startPass(plan, library);
     setSession(started);
     setFinishedSession(null);
     setPausedAtMs(null);
     setNowMs(Date.now());
     setStatusMessage("");
+  }
+
+  function openNewEditor() {
+    setEditingPlanId(null);
+    setCustomName("Eget danspass");
+    setTargetMinutes(60);
+    setCustomDrafts(createDefaultDraft());
+    setStatusMessage("");
+    setManageScreen("editor");
+  }
+
+  function openExistingEditor(plan: PassPlan) {
+    setEditingPlanId(plan.id);
+    setCustomName(plan.name);
+    setTargetMinutes(plan.targetMinutes);
+    setCustomDrafts(draftsFromPlan(plan));
+    setStatusMessage("");
+    setManageScreen("editor");
   }
 
   function completeCurrentItem() {
@@ -362,19 +443,31 @@ export default function Home() {
     setNowMs(Date.now());
   }
 
-  function saveCustomPlan() {
+  function saveEditorPlan() {
+    const savedId = editingPlanId ?? makeId("saved");
     const planToSave: PassPlan = {
-      ...activePlan,
-      id: activePlan.id === "custom-current" ? makeId("saved") : activePlan.id,
+      ...editorPlan,
+      id: savedId,
       source: "saved"
     };
     const nextPlans = upsertStoredPlan(window.localStorage, planToSave);
     setSavedPlans(nextPlans);
-    setStatusMessage("Upplägget sparades lokalt i den här webbläsaren.");
+    setEditingPlanId(savedId);
+    setSelectedPlanId(savedId);
+    setStatusMessage("Passet sparades lokalt i den här webbläsaren.");
   }
 
   function removeSavedPlan(planId: string) {
-    setSavedPlans(deleteStoredPlan(window.localStorage, planId));
+    const nextPlans = deleteStoredPlan(window.localStorage, planId);
+    setSavedPlans(nextPlans);
+    if (selectedPlanId === planId) {
+      setSelectedPlanId(nextPlans[0]?.id ?? "");
+    }
+    if (editingPlanId === planId) {
+      setEditingPlanId(null);
+      setManageScreen("list");
+    }
+    setStatusMessage("Passet togs bort.");
   }
 
   if (session) {
@@ -396,13 +489,24 @@ export default function Home() {
   if (appView === "start") {
     return (
       <StartView
+        plans={savedPlans}
         targetMinutes={targetMinutes}
-        maxTargetMinutes={selectedTemplate.targetMinutes}
-        selectedTemplateId={selectedTemplateId}
+        maxTargetMinutes={Math.max(targetMinuteRange.min, selectedPlan?.targetMinutes ?? 60)}
+        selectedPlanId={selectedPlanId}
         onTargetMinutesChange={setTargetMinutes}
-        onTemplateSelect={selectTemplate}
-        onStart={() => startCurrentPass(clonePlanForRun(selectedTemplate, { targetMinutes, warmupSongCount }))}
-        onAdvanced={() => setAppView("advanced")}
+        onPlanSelect={selectStartPlan}
+        onStart={() => {
+          if (!selectedPlan) return;
+          startCurrentPass(clonePlanForRun(selectedPlan, { targetMinutes, warmupSongCount }));
+        }}
+        onManage={() => {
+          setAppView("manage");
+          setManageScreen("home");
+        }}
+        onCreatePass={() => {
+          setAppView("manage");
+          openNewEditor();
+        }}
       />
     );
   }
@@ -423,109 +527,44 @@ export default function Home() {
             Till startsidan
           </button>
         </div>
-
-        <div className="section">
-          <div className="section-title">
-            <h2>Passinställningar</h2>
-            <Clock size={18} aria-hidden="true" />
-          </div>
-          <PresetInput
-            label="Tid"
-            value={targetMinutes}
-            presets={[30, 45, 60, 75]}
-            minimum={1}
-            onChange={setTargetMinutes}
-          />
-        </div>
-
-        <div className="section">
-          <div className="section-title">
-            <h2>Låtdata</h2>
-            <ListMusic size={18} aria-hidden="true" />
-          </div>
-          <div className="level-tags">
-            {DIFFICULTIES.map((difficulty) => (
-              <span className={levelClass(difficulty)} key={difficulty}>
-                {difficulty}: {counts[difficulty]}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <HelpSection />
       </aside>
 
       <section className="main">
         <div className="workspace">
-          <div className="section">
-            <div className="section-title">
-              <div>
-                <h2>Bygg danspass</h2>
-                <p className="hint">
-                  Välj en mall eller bygg egna tidssegment. Appen skapar inte hela listan i förväg,
-                  utan väljer nästa låt när du klickar klart.
-                </p>
-              </div>
-              <div className="mode-tabs" role="tablist" aria-label="Välj byggläge">
-                <button
-                  className="tab-button"
-                  data-active={builderMode === "templates"}
-                  onClick={() => setBuilderMode("templates")}
-                >
-                  <Shuffle size={17} /> Mallar
-                </button>
-                <button
-                  className="tab-button"
-                  data-active={builderMode === "custom"}
-                  onClick={() => setBuilderMode("custom")}
-                >
-                  <Plus size={17} /> Eget upplägg
-                </button>
-              </div>
-            </div>
+          {manageScreen === "home" ? (
+            <ManageHome
+              plansCount={savedPlans.length}
+              onCreate={openNewEditor}
+              onEdit={() => setManageScreen("list")}
+            />
+          ) : null}
 
-            {builderMode === "templates" ? (
-              <TemplateBuilder
-                selectedTemplateId={selectedTemplateId}
-                progressiveFinal={progressiveFinal}
-                onProgressiveFinalChange={setProgressiveFinal}
-                onSelect={applyTemplate}
-              />
-            ) : (
-              <CustomBuilder
-                name={customName}
-                onNameChange={setCustomName}
-                drafts={customDrafts}
-                onDraftsChange={setCustomDrafts}
-              />
-            )}
-          </div>
+          {manageScreen === "list" ? (
+            <ManagePlanList
+              plans={savedPlans}
+              onBack={() => setManageScreen("home")}
+              onCreate={openNewEditor}
+              onDelete={removeSavedPlan}
+              onEdit={openExistingEditor}
+            />
+          ) : null}
 
-          <div className="section">
-            <div className="section-title">
-              <h2>Passplan</h2>
-              <div className="button-row">
-                <button className="ghost-button" onClick={saveCustomPlan}>
-                  <Save size={17} /> Spara upplägg
-                </button>
-                <button className="primary-button" onClick={() => startCurrentPass()}>
-                  <Play size={18} /> Starta pass
-                </button>
-              </div>
-            </div>
-            <PlanSummary plan={activePlan} />
-            {statusMessage ? <p className="hint">{statusMessage}</p> : null}
-          </div>
-
-          <SavedPlans
-            plans={savedPlans}
-            onStart={(plan) => {
-              setBuilderMode("custom");
-              setTargetMinutes(plan.targetMinutes);
-              startCurrentPass(clonePlanForRun(plan, { targetMinutes: plan.targetMinutes, warmupSongCount }));
-            }}
-            onDelete={removeSavedPlan}
-          />
+          {manageScreen === "editor" ? (
+            <PassEditor
+              mode={editingPlanId ? "edit" : "new"}
+              plan={editorPlan}
+              name={customName}
+              targetMinutes={targetMinutes}
+              drafts={customDrafts}
+              statusMessage={statusMessage}
+              onBack={() => setManageScreen(editingPlanId ? "list" : "home")}
+              onDraftsChange={setCustomDrafts}
+              onNameChange={setCustomName}
+              onSave={saveEditorPlan}
+              onStart={() => startCurrentPass(clonePlanForRun(editorPlan, { targetMinutes, warmupSongCount }))}
+              onTargetMinutesChange={setTargetMinutes}
+            />
+          ) : null}
 
           {finishedSession ? <FinishedSummary session={finishedSession} /> : null}
         </div>
@@ -535,24 +574,26 @@ export default function Home() {
 }
 
 function StartView({
+  plans,
   targetMinutes,
   maxTargetMinutes,
-  selectedTemplateId,
+  selectedPlanId,
   onTargetMinutesChange,
-  onTemplateSelect,
+  onPlanSelect,
   onStart,
-  onAdvanced
+  onManage,
+  onCreatePass
 }: {
+  plans: PassPlan[];
   targetMinutes: number;
   maxTargetMinutes: number;
-  selectedTemplateId: string;
+  selectedPlanId: string;
   onTargetMinutesChange: (value: number) => void;
-  onTemplateSelect: (template: PassPlan) => void;
+  onPlanSelect: (plan: PassPlan) => void;
   onStart: () => void;
-  onAdvanced: () => void;
+  onManage: () => void;
+  onCreatePass: () => void;
 }) {
-  const startTemplates = [templates[0], templates[1], createProgressiveTopTemplate("11")];
-
   return (
     <main className="start-page">
       <div className="start-shell">
@@ -566,39 +607,52 @@ function StartView({
           </div>
         </header>
 
-        <section className="start-template-list" aria-label="Välj danspassupplägg">
-          {startTemplates.map((template) => (
-            <button
-              className="start-template-button"
-              data-active={selectedTemplateId === template.id}
-              key={template.id}
-              onClick={() => onTemplateSelect(template)}
-            >
-              <span>
-                <strong>{template.name}</strong>
-                <small>{templateShortDescription(template)}</small>
-              </span>
-              <span className="template-meta">
-                {template.segments
-                  .flatMap((segment) => difficultiesInStrategy(segment.strategy))
-                  .map((difficulty, index) => (
-                    <span className={levelClass(difficulty)} key={`${template.id}-${difficulty}-${index}`}>
-                      {difficulty}
-                    </span>
-                  ))}
-              </span>
-            </button>
-          ))}
-        </section>
+        {plans.length > 0 ? (
+          <>
+            <section className="start-template-list" aria-label="Välj danspass">
+              {plans.map((plan) => (
+                <button
+                  className="start-template-button"
+                  data-active={selectedPlanId === plan.id}
+                  key={plan.id}
+                  onClick={() => onPlanSelect(plan)}
+                >
+                  <span>
+                    <strong>{plan.name}</strong>
+                    <small>{planShortDescription(plan)}</small>
+                  </span>
+                  <span className="template-meta">
+                    {plan.segments
+                      .flatMap((segment) => difficultiesInStrategy(segment.strategy))
+                      .map((difficulty, index) => (
+                        <span className={levelClass(difficulty)} key={`${plan.id}-${difficulty}-${index}`}>
+                          {difficulty}
+                        </span>
+                      ))}
+                  </span>
+                </button>
+              ))}
+            </section>
 
-        <TimeSlider value={targetMinutes} max={maxTargetMinutes} onChange={onTargetMinutesChange} />
+            <TimeSlider value={targetMinutes} max={maxTargetMinutes} onChange={onTargetMinutesChange} />
+          </>
+        ) : (
+          <section className="empty-state">
+            Det finns inga sparade pass.
+          </section>
+        )}
 
         <section className="start-actions">
-          <button className="primary-button start-button" onClick={onStart}>
+          <button className="primary-button start-button" disabled={plans.length === 0} onClick={onStart}>
             <Play size={22} /> Starta
           </button>
-          <button className="ghost-button" onClick={onAdvanced}>
-            <SlidersHorizontal size={18} /> Avancerade inställningar
+          {plans.length === 0 ? (
+            <button className="ghost-button" onClick={onCreatePass}>
+              <FilePlus2 size={18} /> Skapa nytt pass
+            </button>
+          ) : null}
+          <button className="ghost-button" onClick={onManage}>
+            <SlidersHorizontal size={18} /> Ändra/skapa nytt pass
           </button>
         </section>
       </div>
@@ -639,6 +693,174 @@ function TimeSlider({
         ))}
       </div>
     </section>
+  );
+}
+
+function ManageHome({
+  plansCount,
+  onCreate,
+  onEdit
+}: {
+  plansCount: number;
+  onCreate: () => void;
+  onEdit: () => void;
+}) {
+  return (
+    <div className="section">
+      <div className="section-title">
+        <h2>Passhantering</h2>
+      </div>
+      <div className="manage-choice-grid">
+        <button className="manage-choice-card" onClick={onEdit}>
+          <Pencil size={22} aria-hidden="true" />
+          <span>
+            <strong>Ändra befintligt pass</strong>
+            <small>{plansCount === 1 ? "1 sparat pass" : `${plansCount} sparade pass`}</small>
+          </span>
+        </button>
+        <button className="manage-choice-card" onClick={onCreate}>
+          <FilePlus2 size={23} aria-hidden="true" />
+          <span>
+            <strong>Skapa nytt pass</strong>
+            <small>Bygg upp namn, tid och segment</small>
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ManagePlanList({
+  plans,
+  onBack,
+  onCreate,
+  onDelete,
+  onEdit
+}: {
+  plans: PassPlan[];
+  onBack: () => void;
+  onCreate: () => void;
+  onDelete: (planId: string) => void;
+  onEdit: (plan: PassPlan) => void;
+}) {
+  return (
+    <div className="section">
+      <div className="section-title">
+        <h2>Ändra befintligt pass</h2>
+        <div className="button-row">
+          <button className="ghost-button" onClick={onBack}>
+            <ArrowLeft size={17} /> Tillbaka
+          </button>
+          <button className="ghost-button" onClick={onCreate}>
+            <FilePlus2 size={17} /> Skapa nytt
+          </button>
+        </div>
+      </div>
+
+      {plans.length === 0 ? (
+        <div className="empty-state">Det finns inga sparade pass.</div>
+      ) : (
+        <div className="saved-list">
+          {plans.map((plan) => (
+            <div className="saved-plan" key={plan.id}>
+              <div>
+                <strong>{plan.name}</strong>
+                <p>{planShortDescription(plan)}</p>
+              </div>
+              <div className="button-row">
+                <button className="small-button" onClick={() => onEdit(plan)}>
+                  <Pencil size={15} /> Ändra
+                </button>
+                <button className="icon-button" aria-label="Radera pass" onClick={() => onDelete(plan.id)}>
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PassEditor({
+  mode,
+  plan,
+  name,
+  targetMinutes,
+  drafts,
+  statusMessage,
+  onBack,
+  onDraftsChange,
+  onNameChange,
+  onSave,
+  onStart,
+  onTargetMinutesChange
+}: {
+  mode: "new" | "edit";
+  plan: PassPlan;
+  name: string;
+  targetMinutes: number;
+  drafts: CustomSegmentDraft[];
+  statusMessage: string;
+  onBack: () => void;
+  onDraftsChange: (drafts: CustomSegmentDraft[]) => void;
+  onNameChange: (name: string) => void;
+  onSave: () => void;
+  onStart: () => void;
+  onTargetMinutesChange: (value: number) => void;
+}) {
+  return (
+    <>
+      <div className="section">
+        <div className="section-title">
+          <div>
+            <h2>{mode === "edit" ? "Ändra pass" : "Skapa nytt pass"}</h2>
+          </div>
+          <button className="ghost-button" onClick={onBack}>
+            <ArrowLeft size={17} /> Tillbaka
+          </button>
+        </div>
+
+        <div className="editor-fields">
+          <div className="panel">
+            <div className="section-title">
+              <h3>Total tid</h3>
+              <Clock size={18} aria-hidden="true" />
+            </div>
+            <PresetInput
+              label="Tid"
+              value={targetMinutes}
+              presets={[30, 45, 60, 75]}
+              minimum={1}
+              onChange={onTargetMinutesChange}
+            />
+          </div>
+          <CustomBuilder
+            name={name}
+            onNameChange={onNameChange}
+            drafts={drafts}
+            onDraftsChange={onDraftsChange}
+          />
+        </div>
+      </div>
+
+      <div className="section">
+        <div className="section-title">
+          <h2>Passplan</h2>
+          <div className="button-row">
+            <button className="ghost-button" onClick={onSave}>
+              <Save size={17} /> Spara pass
+            </button>
+            <button className="primary-button" onClick={onStart}>
+              <Play size={18} /> Starta pass
+            </button>
+          </div>
+        </div>
+        <PlanSummary plan={plan} />
+        {statusMessage ? <p className="hint">{statusMessage}</p> : null}
+      </div>
+    </>
   );
 }
 
@@ -689,59 +911,6 @@ function PresetInput({
           </label>
         ) : null}
       </div>
-    </div>
-  );
-}
-
-function TemplateBuilder({
-  selectedTemplateId,
-  progressiveFinal,
-  onProgressiveFinalChange,
-  onSelect
-}: {
-  selectedTemplateId: string;
-  progressiveFinal: "11" | "12-13";
-  onProgressiveFinalChange: (difficulty: "11" | "12-13") => void;
-  onSelect: (template: PassPlan) => void;
-}) {
-  const visibleTemplates = [templates[0], templates[1], createProgressiveTopTemplate(progressiveFinal)];
-
-  return (
-    <div className="template-list">
-      {visibleTemplates.map((template) => (
-        <article className="template-card" data-active={selectedTemplateId === template.id} key={template.id}>
-          <div>
-            <h3>{template.name}</h3>
-            <p>{templateDescription(template)}</p>
-          </div>
-          <div className="template-meta">
-            <span className="pill">{template.targetMinutes} min</span>
-            <span className="pill">{template.warmupSongCount} uppvärmning</span>
-            {template.segments.flatMap((segment) => difficultiesInStrategy(segment.strategy)).map((difficulty, index) => (
-              <span className={levelClass(difficulty)} key={`${template.id}-${difficulty}-${index}`}>
-                {difficulty}
-              </span>
-            ))}
-          </div>
-          {template.name.startsWith("Pass 3") ? (
-            <label className="field">
-              <span>Avslut</span>
-              <select
-                value={progressiveFinal}
-                onChange={(event) => onProgressiveFinalChange(event.target.value as "11" | "12-13")}
-              >
-                <option value="11">Svårighetsgrad 11</option>
-                <option value="12-13">Svårighetsgrad 12-13</option>
-              </select>
-            </label>
-          ) : null}
-          <div className="template-actions">
-            <button className="ghost-button" onClick={() => onSelect(template)}>
-              Välj mall
-            </button>
-          </div>
-        </article>
-      ))}
     </div>
   );
 }
@@ -922,75 +1091,6 @@ function PlanSummary({ plan }: { plan: PassPlan }) {
   );
 }
 
-function SavedPlans({
-  plans,
-  onStart,
-  onDelete
-}: {
-  plans: PassPlan[];
-  onStart: (plan: PassPlan) => void;
-  onDelete: (planId: string) => void;
-}) {
-  return (
-    <div className="section">
-      <div className="section-title">
-        <h2>Sparade upplägg</h2>
-        <Save size={18} aria-hidden="true" />
-      </div>
-      {plans.length === 0 ? (
-        <div className="empty-state">Inga sparade upplägg i den här webbläsaren ännu.</div>
-      ) : (
-        <div className="saved-list">
-          {plans.map((plan) => (
-            <div className="saved-plan" key={plan.id}>
-              <div>
-                <strong>{plan.name}</strong>
-                <p>
-                  {plan.targetMinutes} min, {plan.warmupSongCount} uppvärmning
-                </p>
-              </div>
-              <div className="button-row">
-                <button className="small-button" onClick={() => onStart(plan)}>
-                  <Play size={15} /> Starta
-                </button>
-                <button className="icon-button" aria-label="Radera sparat upplägg" onClick={() => onDelete(plan.id)}>
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function HelpSection() {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="section help">
-      <button
-        className="ghost-button info-toggle"
-        aria-expanded={isOpen}
-        onClick={() => setIsOpen((current) => !current)}
-      >
-        <BookOpen size={18} aria-hidden="true" />
-        {isOpen ? "Stäng information" : "Information"}
-      </button>
-      {isOpen ? (
-        <div className="help-panel">
-          <h2>Så används appen</h2>
-          <p>Välj mål­tid och antal uppvärmningslåtar. Uppvärmningen räknas in i total­tiden.</p>
-          <p>Efter start visas en låt i taget. När låten är klar klickar du `Klar - nästa låt`.</p>
-          <p>Om mål­tiden har passerats när du klickar klart avslutas passet. Därför kan passet bli lite längre än vald tid.</p>
-          <p>Svårigheter väljs live från tidssegmenten, och appen undviker dubbletter tills en låtpool tar slut.</p>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 function SessionView({
   session,
   nowMs,
@@ -1100,19 +1200,10 @@ function FinishedSummary({ session }: { session: PassSession }) {
   );
 }
 
-function templateDescription(template: PassPlan) {
-  return template.segments
-    .map((segment) => {
-      const until = segment.untilMinute === undefined ? "slut" : `${segment.untilMinute} min`;
-      return `${formatStrategy(segment.strategy)} till ${until}`;
-    })
-    .join(". ");
-}
-
-function templateShortDescription(template: PassPlan) {
+function planShortDescription(plan: PassPlan) {
   const warmup =
-    template.warmupSongCount > 0 ? `${template.warmupSongCount} uppvärmningslåtar. ` : "";
-  const segments = template.segments
+    plan.warmupSongCount > 0 ? `${plan.warmupSongCount} uppvärmningslåtar. ` : "";
+  const segments = plan.segments
     .map((segment) => `${segmentTimeLabel(segment)}: ${formatStrategy(segment.strategy)}`)
     .join(". ");
   return `${warmup}${segments}`;

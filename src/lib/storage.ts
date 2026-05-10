@@ -2,6 +2,7 @@ import type { PassPlan } from "./types";
 import { validatePlan } from "./passEngine";
 
 export const STORED_PASS_PLANS_KEY = "itg-favourites-pass-plans-v1";
+export const STORED_PASS_PLANS_SEEDED_KEY = "itg-favourites-pass-plans-seeded-v1";
 
 export type StoredPassPlanCollection = {
   version: 1;
@@ -33,6 +34,36 @@ export function parseStoredPlans(rawValue: string | null): PassPlan[] {
 
 export function loadStoredPlans(storage: BrowserStorage): PassPlan[] {
   return parseStoredPlans(storage.getItem(STORED_PASS_PLANS_KEY));
+}
+
+export function loadStoredPlansWithSeed(
+  storage: BrowserStorage,
+  seedPlans: PassPlan[]
+): PassPlan[] {
+  const hasStoredCollection = storage.getItem(STORED_PASS_PLANS_KEY) !== null;
+  const hasSeededPlans = storage.getItem(STORED_PASS_PLANS_SEEDED_KEY) === "true";
+
+  if (!hasStoredCollection && !hasSeededPlans) {
+    const nowIso = new Date().toISOString();
+    const plans = seedPlans.map((plan) =>
+      normalizeStoredPlan({
+        ...plan,
+        source: "saved",
+        createdAt: nowIso,
+        updatedAt: nowIso
+      })
+    );
+
+    saveStoredPlans(storage, plans);
+    storage.setItem(STORED_PASS_PLANS_SEEDED_KEY, "true");
+    return plans;
+  }
+
+  if (!hasSeededPlans) {
+    storage.setItem(STORED_PASS_PLANS_SEEDED_KEY, "true");
+  }
+
+  return loadStoredPlans(storage);
 }
 
 export function saveStoredPlans(storage: BrowserStorage, plans: PassPlan[]): void {
