@@ -957,6 +957,8 @@ function SessionView({
   const targetReached = hasReachedTarget(session, nowMs);
   const current = session.currentItem;
   const activeSegment = activeSegmentAt(session.plan, elapsedMs / 60_000);
+  const currentTitle = current?.type === "warmup" ? current.label : current?.song.title;
+  const ordinalLabel = current?.type === "warmup" ? `Uppvärmning ${current.ordinal}` : `Låt ${current?.ordinal ?? 1}`;
 
   return (
     <main className="session">
@@ -972,6 +974,7 @@ function SessionView({
         <div className="metric">
           <span>Aktivt segment</span>
           <strong>{activeSegment.name}</strong>
+          <p>{targetReached ? `${ordinalLabel} - målet uppnått` : ordinalLabel}</p>
         </div>
       </div>
 
@@ -980,22 +983,17 @@ function SessionView({
           <div className="song-meta-bar">
             {current?.type === "song" ? (
               <div className={difficultyMeterClass(current.difficulty)}>
-                <span>Svårighet</span>
                 <strong>{current.difficulty}</strong>
               </div>
             ) : (
               <div className="difficulty-meter warmup-meter">
-                <span>Moment</span>
-                <strong>Värm upp</strong>
+                <strong>Värm</strong>
               </div>
             )}
             <div className="song-rail">
-              <span>{targetReached ? "Målet är uppnått - klicka klart för att avsluta" : `Låt ${current?.ordinal ?? 1}`}</span>
+              <h1 className="song-title">{currentTitle}</h1>
             </div>
           </div>
-          <h1 className="song-title">
-            {current?.type === "warmup" ? current.label : current?.song.title}
-          </h1>
           {current?.type === "song" && current.song.artist ? (
             <p className="song-artist">{current.song.artist}</p>
           ) : null}
