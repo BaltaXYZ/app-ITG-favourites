@@ -619,17 +619,9 @@ function StartView({
                 >
                   <span>
                     <strong>{plan.name}</strong>
-                    <small>{planShortDescription(plan)}</small>
+                    <small>{planIntroDescription(plan)}</small>
                   </span>
-                  <span className="template-meta">
-                    {plan.segments
-                      .flatMap((segment) => difficultiesInStrategy(segment.strategy))
-                      .map((difficulty, index) => (
-                        <span className={levelClass(difficulty)} key={`${plan.id}-${difficulty}-${index}`}>
-                          {difficulty}
-                        </span>
-                      ))}
-                  </span>
+                  <PlanSegmentTimeline plan={plan} />
                 </button>
               ))}
             </section>
@@ -1091,6 +1083,35 @@ function PlanSummary({ plan }: { plan: PassPlan }) {
   );
 }
 
+function PlanSegmentTimeline({
+  plan,
+  activeSegmentId
+}: {
+  plan: PassPlan;
+  activeSegmentId?: string;
+}) {
+  return (
+    <span className="segment-map" aria-label="Passdelar">
+      {plan.segments.map((segment) => (
+        <span
+          className="segment-badge-group"
+          data-active={activeSegmentId === segment.id}
+          key={segment.id}
+        >
+          <span className="segment-levels" aria-label={`${segmentTimeLabel(segment)}: ${formatStrategy(segment.strategy)}`}>
+            {difficultiesInStrategy(segment.strategy).map((difficulty, index) => (
+              <span className={levelClass(difficulty)} key={`${segment.id}-${difficulty}-${index}`}>
+                {difficulty}
+              </span>
+            ))}
+          </span>
+          <span className="segment-time">{segmentTimeLabel(segment)}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
 function SessionView({
   session,
   nowMs,
@@ -1111,6 +1132,7 @@ function SessionView({
   const targetReached = hasReachedTarget(session, nowMs);
   const current = session.currentItem;
   const activeSegment = activeSegmentAt(session.plan, elapsedMs / 60_000);
+  const activeSegmentId = current?.type === "song" ? activeSegment.id : undefined;
   const currentTitle = current?.type === "warmup" ? current.label : current?.song.title;
   const ordinalLabel = current?.type === "warmup" ? `Uppvärmning ${current.ordinal}` : `Låt ${current?.ordinal ?? 1}`;
 
@@ -1126,11 +1148,15 @@ function SessionView({
           <strong>{formatClock(remainingMs)}</strong>
         </div>
         <div className="metric">
-          <span>Aktivt segment</span>
-          <strong>{activeSegment.name}</strong>
-          <p>{targetReached ? `${ordinalLabel} - målet uppnått` : ordinalLabel}</p>
+          <span>Aktuellt moment</span>
+          <strong>{targetReached ? "Mål uppnått" : ordinalLabel}</strong>
+          <p>{current?.type === "song" ? formatStrategy(activeSegment.strategy) : "Uppvärmning"}</p>
         </div>
       </div>
+
+      <section className="session-segment-map" aria-label="Passdelar">
+        <PlanSegmentTimeline plan={session.plan} activeSegmentId={activeSegmentId} />
+      </section>
 
       <section className="song-stage">
         <div className="song-stage-inner">
@@ -1207,6 +1233,12 @@ function planShortDescription(plan: PassPlan) {
     .map((segment) => `${segmentTimeLabel(segment)}: ${formatStrategy(segment.strategy)}`)
     .join(". ");
   return `${warmup}${segments}`;
+}
+
+function planIntroDescription(plan: PassPlan) {
+  return plan.warmupSongCount > 0
+    ? `${plan.warmupSongCount} uppvärmningslåtar`
+    : "Ingen uppvärmning";
 }
 
 function segmentTimeLabel(segment: PassSegment) {

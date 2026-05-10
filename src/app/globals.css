@@ -588,6 +588,46 @@ button:disabled {
   gap: 6px;
 }
 
+.segment-map {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.segment-badge-group {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  padding: 6px 7px 5px;
+  border: 1px solid rgba(166, 207, 255, 0.32);
+  border-radius: 7px;
+  background: rgba(6, 12, 28, 0.36);
+}
+
+.segment-levels {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.segment-time {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.segment-badge-group[data-active="true"] {
+  border-color: var(--accent);
+  background: rgba(0, 215, 255, 0.14);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 215, 255, 0.7),
+    0 0 18px rgba(0, 215, 255, 0.24);
+}
+
 .pill,
 .level-pill {
   display: inline-flex;
@@ -687,7 +727,7 @@ button:disabled {
   background: #151816;
   color: #f8f3e9;
   display: grid;
-  grid-template-rows: auto 1fr auto auto;
+  grid-template-rows: auto auto 1fr auto auto;
   overflow: hidden;
   position: relative;
 }
@@ -737,6 +777,36 @@ button:disabled {
   color: #d7d0c2;
   font-size: clamp(0.95rem, 1.8vw, 1.3rem);
   font-weight: 800;
+}
+
+.session-segment-map {
+  padding: 12px 18px;
+  border-top: 1px solid rgba(166, 207, 255, 0.22);
+  border-bottom: 1px solid rgba(166, 207, 255, 0.2);
+  background: rgba(6, 12, 28, 0.76);
+  backdrop-filter: blur(8px);
+}
+
+.session-segment-map .segment-map {
+  width: 100%;
+  justify-content: center;
+}
+
+.session-segment-map .segment-badge-group {
+  border-color: rgba(244, 248, 255, 0.34);
+  background: rgba(16, 28, 54, 0.74);
+}
+
+.session-segment-map .segment-badge-group[data-active="true"] {
+  border-color: #f4f8ff;
+  background: rgba(0, 215, 255, 0.18);
+  box-shadow:
+    inset 0 0 0 1px var(--accent),
+    0 0 24px rgba(0, 215, 255, 0.34);
+}
+
+.session-segment-map .segment-time {
+  color: #d7d0c2;
 }
 
 .song-stage {
@@ -1003,6 +1073,10 @@ button:disabled {
   .start-template-button {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .segment-map {
+    justify-content: flex-start;
   }
 
   .song-stage {
