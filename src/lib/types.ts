@@ -1,6 +1,8 @@
 export const DIFFICULTIES = ["9", "10", "11", "12-13"] as const;
+export const WARMUP_DIFFICULTIES = ["5", "6", "7", "8"] as const;
 
 export type Difficulty = (typeof DIFFICULTIES)[number];
+export type WarmupDifficulty = (typeof WARMUP_DIFFICULTIES)[number];
 
 export type DifficultyCounts = Record<Difficulty, number>;
 
@@ -64,6 +66,7 @@ export type WarmupPassItem = {
   type: "warmup";
   id: string;
   label: string;
+  difficulty: WarmupDifficulty;
   ordinal: number;
 };
 

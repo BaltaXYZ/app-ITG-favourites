@@ -1,5 +1,6 @@
 import {
   DIFFICULTIES,
+  WARMUP_DIFFICULTIES,
   type AdvancePassOptions,
   type CompletedPassItem,
   type Difficulty,
@@ -311,6 +312,7 @@ function chooseItem(
         type: "warmup",
         id: `warmup-${ordinal}`,
         label: `Uppvärmningslåt ${ordinal}`,
+        difficulty: WARMUP_DIFFICULTIES[(ordinal - 1) % WARMUP_DIFFICULTIES.length],
         ordinal
       },
       session

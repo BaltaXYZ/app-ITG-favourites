@@ -170,6 +170,43 @@ button {
   align-items: start;
 }
 
+.time-slider {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(6, 12, 28, 0.7);
+  padding: 14px;
+}
+
+.time-slider-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.time-slider-header span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.time-slider-header strong {
+  font-size: 1.4rem;
+}
+
+.time-slider input {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.time-slider-scale {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
 .start-template-list {
   display: grid;
   gap: 10px;
@@ -519,6 +556,13 @@ button {
   background: var(--level-9);
 }
 
+.level-5,
+.level-6,
+.level-7,
+.level-8 {
+  background: #d97819;
+}
+
 .level-10 {
   background: var(--level-10);
 }
@@ -685,6 +729,15 @@ button {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.34), transparent 42%),
     linear-gradient(90deg, #4ec784, var(--level-9));
+}
+
+.difficulty-meter-5,
+.difficulty-meter-6,
+.difficulty-meter-7,
+.difficulty-meter-8 {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34), transparent 42%),
+    linear-gradient(90deg, #f5cf57, #d97819);
 }
 
 .difficulty-meter-10 {

@@ -52,8 +52,12 @@ const songs = songData.songs as Song[];
 const library = createSongLibrary(songs);
 const counts = countSongsByDifficulty(songs);
 const templates = PASS_TEMPLATES;
-const targetMinutePresets = [30, 45, 60, 75];
-const warmupSongPresets = [0, 2, 4, 6];
+const FIXED_WARMUP_SONG_COUNT = 4;
+const targetMinuteRange = {
+  min: 30,
+  max: 90,
+  step: 15
+};
 
 const defaultWeights: Record<Difficulty, number> = {
   "9": 3,
@@ -94,11 +98,11 @@ function formatStrategy(strategy: SegmentStrategy) {
   }
 }
 
-function levelClass(difficulty: Difficulty) {
+function levelClass(difficulty: string) {
   return `level-pill level-${difficulty.replace("/", "-")}`;
 }
 
-function difficultyMeterClass(difficulty: Difficulty) {
+function difficultyMeterClass(difficulty: string) {
   return `difficulty-meter difficulty-meter-${difficulty.replace("/", "-")}`;
 }
 
@@ -262,7 +266,7 @@ export default function Home() {
   const [appView, setAppView] = useState<AppView>("start");
   const [builderMode, setBuilderMode] = useState<BuilderMode>("templates");
   const [targetMinutes, setTargetMinutes] = useState(60);
-  const [warmupSongCount, setWarmupSongCount] = useState(4);
+  const warmupSongCount = FIXED_WARMUP_SONG_COUNT;
   const [selectedTemplateId, setSelectedTemplateId] = useState(templates[0].id);
   const [progressiveFinal, setProgressiveFinal] = useState<"11" | "12-13">("11");
   const [customName, setCustomName] = useState("Eget danspass");
@@ -311,12 +315,12 @@ export default function Home() {
     setBuilderMode("templates");
     setSelectedTemplateId(plan.id);
     setTargetMinutes(plan.targetMinutes);
-    setWarmupSongCount(plan.warmupSongCount);
   }
 
   function selectTemplate(plan: PassPlan) {
     setBuilderMode("templates");
     setSelectedTemplateId(plan.id);
+    setTargetMinutes(plan.targetMinutes);
   }
 
   function startCurrentPass(plan = activePlan) {
@@ -394,11 +398,8 @@ export default function Home() {
     return (
       <StartView
         targetMinutes={targetMinutes}
-        warmupSongCount={warmupSongCount}
-        selectedTemplate={selectedTemplate}
         selectedTemplateId={selectedTemplateId}
         onTargetMinutesChange={setTargetMinutes}
-        onWarmupSongCountChange={setWarmupSongCount}
         onTemplateSelect={selectTemplate}
         onStart={() => startCurrentPass(clonePlanForRun(selectedTemplate, { targetMinutes, warmupSongCount }))}
         onAdvanced={() => setAppView("advanced")}
@@ -431,16 +432,9 @@ export default function Home() {
           <PresetInput
             label="Tid"
             value={targetMinutes}
-            presets={targetMinutePresets}
+            presets={[30, 45, 60, 75]}
             minimum={1}
             onChange={setTargetMinutes}
-          />
-          <PresetInput
-            label="Antal uppvärmningslåtar"
-            value={warmupSongCount}
-            presets={warmupSongPresets}
-            minimum={0}
-            onChange={setWarmupSongCount}
           />
         </div>
 
@@ -528,8 +522,7 @@ export default function Home() {
             onStart={(plan) => {
               setBuilderMode("custom");
               setTargetMinutes(plan.targetMinutes);
-              setWarmupSongCount(plan.warmupSongCount);
-              startCurrentPass(plan);
+              startCurrentPass(clonePlanForRun(plan, { targetMinutes: plan.targetMinutes, warmupSongCount }));
             }}
             onDelete={removeSavedPlan}
           />
@@ -543,21 +536,15 @@ export default function Home() {
 
 function StartView({
   targetMinutes,
-  warmupSongCount,
-  selectedTemplate,
   selectedTemplateId,
   onTargetMinutesChange,
-  onWarmupSongCountChange,
   onTemplateSelect,
   onStart,
   onAdvanced
 }: {
   targetMinutes: number;
-  warmupSongCount: number;
-  selectedTemplate: PassPlan;
   selectedTemplateId: string;
   onTargetMinutesChange: (value: number) => void;
-  onWarmupSongCountChange: (value: number) => void;
   onTemplateSelect: (template: PassPlan) => void;
   onStart: () => void;
   onAdvanced: () => void;
@@ -576,25 +563,6 @@ function StartView({
             </div>
           </div>
         </header>
-
-        <section className="start-controls" aria-label="Passinställningar">
-          <PresetInput
-            label="Tid"
-            value={targetMinutes}
-            presets={targetMinutePresets}
-            minimum={1}
-            showCustom={false}
-            onChange={onTargetMinutesChange}
-          />
-          <PresetInput
-            label="Antal uppvärmningslåtar"
-            value={warmupSongCount}
-            presets={warmupSongPresets}
-            minimum={0}
-            showCustom={false}
-            onChange={onWarmupSongCountChange}
-          />
-        </section>
 
         <section className="start-template-list" aria-label="Välj danspassupplägg">
           {startTemplates.map((template) => (
@@ -621,6 +589,8 @@ function StartView({
           ))}
         </section>
 
+        <TimeSlider value={targetMinutes} onChange={onTargetMinutesChange} />
+
         <section className="start-actions">
           <button className="primary-button start-button" onClick={onStart}>
             <Play size={22} /> Starta
@@ -631,6 +601,34 @@ function StartView({
         </section>
       </div>
     </main>
+  );
+}
+
+function TimeSlider({ value, onChange }: { value: number; onChange: (value: number) => void }) {
+  return (
+    <section className="time-slider" aria-label="Tid">
+      <div className="time-slider-header">
+        <span>Tid</span>
+        <strong>{value} min</strong>
+      </div>
+      <input
+        aria-label="Tid i minuter"
+        max={targetMinuteRange.max}
+        min={targetMinuteRange.min}
+        step={targetMinuteRange.step}
+        type="range"
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value))}
+      />
+      <div className="time-slider-scale" aria-hidden="true">
+        {Array.from(
+          { length: (targetMinuteRange.max - targetMinuteRange.min) / targetMinuteRange.step + 1 },
+          (_, index) => targetMinuteRange.min + index * targetMinuteRange.step
+        ).map((minute) => (
+          <span key={minute}>{minute}</span>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -1032,8 +1030,8 @@ function SessionView({
                 <strong>{current.difficulty}</strong>
               </div>
             ) : (
-              <div className="difficulty-meter warmup-meter">
-                <strong>Värm</strong>
+              <div className={`${difficultyMeterClass(current?.difficulty ?? "5")} warmup-meter`}>
+                <strong>{current?.difficulty ?? "5"}</strong>
               </div>
             )}
             <div className="song-rail">

@@ -39,7 +39,8 @@ describe("passEngine", () => {
 
     expect(session.currentItem).toMatchObject({
       type: "warmup",
-      label: "Uppvärmningslåt 1"
+      label: "Uppvärmningslåt 1",
+      difficulty: "5"
     });
 
     const secondWarmup = advancePass(session, libraryWithCounts({ "9": 2 }), {
@@ -49,7 +50,8 @@ describe("passEngine", () => {
     expect(secondWarmup.status).toBe("active");
     expect(secondWarmup.currentItem).toMatchObject({
       type: "warmup",
-      label: "Uppvärmningslåt 2"
+      label: "Uppvärmningslåt 2",
+      difficulty: "6"
     });
 
     const finished = advancePass(secondWarmup, libraryWithCounts({ "9": 2 }), {
