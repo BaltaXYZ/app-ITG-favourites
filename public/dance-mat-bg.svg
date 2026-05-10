@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-label="Abstract dance mat arrows and stage lights">
+  <rect width="1600" height="1000" fill="#101413"/>
+  <g opacity="0.28">
+    <circle cx="205" cy="185" r="160" fill="#008891"/>
+    <circle cx="1360" cy="820" r="210" fill="#7b3fb3"/>
+    <circle cx="1260" cy="170" r="130" fill="#c77800"/>
+  </g>
+  <g fill="none" stroke="#f4f0e8" stroke-width="16" stroke-linejoin="round" opacity="0.38">
+    <path d="M250 625h170v-92l155 145-155 145v-92H250z"/>
+    <path d="M1350 370h-170v92l-155-145 155-145v92h170z"/>
+    <path d="M760 180v170h92L707 505 562 350h92V180z"/>
+    <path d="M840 820V650h-92l145-155 145 155h-92v170z"/>
+  </g>
+  <g opacity="0.24">
+    <rect x="525" y="315" width="550" height="360" rx="34" fill="#f4f0e8"/>
+    <rect x="565" y="355" width="135" height="120" rx="18" fill="#006d77"/>
+    <rect x="735" y="355" width="135" height="120" rx="18" fill="#2f6f4e"/>
+    <rect x="905" y="355" width="135" height="120" rx="18" fill="#b54708"/>
+    <rect x="565" y="515" width="135" height="120" rx="18" fill="#6f4aa8"/>
+    <rect x="735" y="515" width="135" height="120" rx="18" fill="#101413"/>
+    <rect x="905" y="515" width="135" height="120" rx="18" fill="#006d77"/>
+  </g>
+  <g stroke="#ffffff" stroke-width="3" opacity="0.18">
+    <path d="M0 760c220-120 405-120 555 0s330 120 540 0 375-120 505 0"/>
+    <path d="M0 270c250 115 440 105 570-30s300-135 510 0 385 145 520 30"/>
+  </g>
+</svg>

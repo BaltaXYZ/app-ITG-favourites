@@ -908,16 +908,27 @@ function SavedPlans({
 }
 
 function HelpSection() {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <div className="section help">
-      <div className="section-title">
-        <h2>Så används appen</h2>
+      <button
+        className="ghost-button info-toggle"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((current) => !current)}
+      >
         <BookOpen size={18} aria-hidden="true" />
-      </div>
-      <p>Välj mål­tid och antal uppvärmningslåtar. Uppvärmningen räknas in i total­tiden.</p>
-      <p>Efter start visas en låt i taget. När låten är klar klickar du `Klar - nästa låt`.</p>
-      <p>Om mål­tiden har passerats när du klickar klart avslutas passet. Därför kan passet bli lite längre än vald tid.</p>
-      <p>Svårigheter väljs live från tidssegmenten, och appen undviker dubbletter tills en låtpool tar slut.</p>
+        {isOpen ? "Stäng information" : "Information"}
+      </button>
+      {isOpen ? (
+        <div className="help-panel">
+          <h2>Så används appen</h2>
+          <p>Välj mål­tid och antal uppvärmningslåtar. Uppvärmningen räknas in i total­tiden.</p>
+          <p>Efter start visas en låt i taget. När låten är klar klickar du `Klar - nästa låt`.</p>
+          <p>Om mål­tiden har passerats när du klickar klart avslutas passet. Därför kan passet bli lite längre än vald tid.</p>
+          <p>Svårigheter väljs live från tidssegmenten, och appen undviker dubbletter tills en låtpool tar slut.</p>
+        </div>
+      ) : null}
     </div>
   );
 }
