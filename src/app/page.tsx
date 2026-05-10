@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Activity,
   BookOpen,
   Check,
   Clock,
@@ -101,6 +100,14 @@ function levelClass(difficulty: Difficulty) {
 
 function difficultyMeterClass(difficulty: Difficulty) {
   return `difficulty-meter difficulty-meter-${difficulty.replace("/", "-")}`;
+}
+
+function BrandMark() {
+  return (
+    <div className="brand-mark" aria-hidden="true">
+      <span className="itg-arrow-symbol" />
+    </div>
+  );
 }
 
 function createDefaultDraft(): CustomSegmentDraft[] {
@@ -360,9 +367,7 @@ export default function Home() {
     <main className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          <div className="brand-mark" aria-hidden="true">
-            <Activity size={26} />
-          </div>
+          <BrandMark />
           <div>
             <h1>ITG Favourites</h1>
             <p>Timerstyrda danspass för dansmatta</p>
@@ -521,9 +526,7 @@ function StartView({
       <div className="start-shell">
         <header className="start-header">
           <div className="brand">
-            <div className="brand-mark" aria-hidden="true">
-              <Activity size={26} />
-            </div>
+            <BrandMark />
             <div>
               <h1>ITG Favourites</h1>
               <p>Bygg ett danspass och starta direkt</p>
@@ -1001,10 +1004,13 @@ function SessionView({
         </div>
       </section>
 
-      <div className="session-bottom">
+      <div className="session-next-action">
         <button className="primary-button" onClick={onComplete} disabled={paused}>
           <Check size={22} /> {targetReached ? "Klar - avsluta pass" : "Klar - nästa låt"}
         </button>
+      </div>
+
+      <div className="session-bottom">
         <div className="button-row">
           <button className="ghost-button" onClick={onPause}>
             {paused ? <Play size={18} /> : <Pause size={18} />}
