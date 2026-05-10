@@ -1076,7 +1076,7 @@ button:disabled {
     flex-direction: column;
   }
 
-  .segment-map {
+  .start-template-button .segment-map {
     justify-content: flex-start;
   }
 
@@ -1099,6 +1099,31 @@ button:disabled {
 
   .song-rail {
     padding-inline: 18px;
+  }
+}
+
+@media (max-width: 520px) {
+  .start-template-button .segment-map {
+    gap: 4px;
+  }
+
+  .start-template-button .segment-badge-group {
+    gap: 4px;
+    padding: 5px 5px 4px;
+  }
+
+  .start-template-button .segment-levels {
+    gap: 4px;
+  }
+
+  .start-template-button .level-pill {
+    min-height: 24px;
+    padding: 2px 8px;
+    font-size: 0.78rem;
+  }
+
+  .start-template-button .segment-time {
+    font-size: 0.68rem;
   }
 }
 
