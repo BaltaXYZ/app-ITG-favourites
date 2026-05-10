@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">ITG Favourites appikon</title>
+  <desc id="desc">En neonbelyst dansmattepil i In the Groove-inspirerad stil.</desc>
+  <defs>
+    <linearGradient id="bg" x1="74" x2="438" y1="58" y2="454" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0b1a33"/>
+      <stop offset="0.5" stop-color="#0c5168"/>
+      <stop offset="1" stop-color="#6f4aa8"/>
+    </linearGradient>
+    <linearGradient id="arrow" x1="128" x2="384" y1="78" y2="430" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f7fbff"/>
+      <stop offset="0.42" stop-color="#7ef2ff"/>
+      <stop offset="1" stop-color="#00a4d6"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="256" x2="256" y1="64" y2="260" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="0" stdDeviation="17" flood-color="#00d7ff" flood-opacity="0.7"/>
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000000" flood-opacity="0.55"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="#070b17"/>
+  <rect x="24" y="24" width="464" height="464" rx="82" fill="url(#bg)" stroke="#dff8ff" stroke-opacity="0.6" stroke-width="10"/>
+  <rect x="56" y="56" width="400" height="400" rx="58" fill="none" stroke="#00d7ff" stroke-opacity="0.36" stroke-width="8"/>
+  <path d="M256 70 424 232h-84v200H172V232H88L256 70Z" fill="url(#arrow)" filter="url(#glow)" stroke="#f4fbff" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M256 92 390 222h-62v22H184v-22h-62L256 92Z" fill="url(#shine)" opacity="0.85"/>
+</svg>
