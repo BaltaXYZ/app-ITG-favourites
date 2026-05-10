@@ -1032,7 +1032,20 @@ function templateDescription(template: PassPlan) {
 }
 
 function templateShortDescription(template: PassPlan) {
-  return template.segments.map((segment) => formatStrategy(segment.strategy)).join(" / ");
+  const warmup =
+    template.warmupSongCount > 0 ? `${template.warmupSongCount} uppvärmningslåtar. ` : "";
+  const segments = template.segments
+    .map((segment) => `${segmentTimeLabel(segment)}: ${formatStrategy(segment.strategy)}`)
+    .join(". ");
+  return `${warmup}${segments}`;
+}
+
+function segmentTimeLabel(segment: PassSegment) {
+  if (segment.untilMinute === undefined) {
+    return segment.fromMinute === 0 ? "från start" : `efter ${segment.fromMinute} min`;
+  }
+
+  return `${segment.fromMinute}-${segment.untilMinute} min`;
 }
 
 function difficultiesInStrategy(strategy: SegmentStrategy): Difficulty[] {
