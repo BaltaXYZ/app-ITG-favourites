@@ -51,6 +51,8 @@ const songs = songData.songs as Song[];
 const library = createSongLibrary(songs);
 const counts = countSongsByDifficulty(songs);
 const templates = PASS_TEMPLATES;
+const targetMinutePresets = [30, 45, 60, 75];
+const warmupSongPresets = [0, 2, 4, 6];
 
 const defaultWeights: Record<Difficulty, number> = {
   "9": 3,
@@ -344,28 +346,20 @@ export default function Home() {
             <h2>Passinställningar</h2>
             <Clock size={18} aria-hidden="true" />
           </div>
-          <div className="form-grid">
-            <label className="field">
-              <span>Mål­tid, minuter</span>
-              <input
-                inputMode="numeric"
-                pattern="[0-9]*"
-                type="text"
-                value={targetMinutes}
-                onChange={(event) => setTargetMinutes(Math.max(1, Number(event.target.value)))}
-              />
-            </label>
-            <label className="field">
-              <span>Uppvärmningslåtar</span>
-              <input
-                inputMode="numeric"
-                pattern="[0-9]*"
-                type="text"
-                value={warmupSongCount}
-                onChange={(event) => setWarmupSongCount(Math.max(0, Number(event.target.value)))}
-              />
-            </label>
-          </div>
+          <PresetInput
+            label="Mål­tid, minuter"
+            value={targetMinutes}
+            presets={targetMinutePresets}
+            minimum={1}
+            onChange={setTargetMinutes}
+          />
+          <PresetInput
+            label="Uppvärmningslåtar"
+            value={warmupSongCount}
+            presets={warmupSongPresets}
+            minimum={0}
+            onChange={setWarmupSongCount}
+          />
         </div>
 
         <div className="section">
@@ -462,6 +456,53 @@ export default function Home() {
         </div>
       </section>
     </main>
+  );
+}
+
+function PresetInput({
+  label,
+  value,
+  presets,
+  minimum,
+  onChange
+}: {
+  label: string;
+  value: number;
+  presets: number[];
+  minimum: number;
+  onChange: (value: number) => void;
+}) {
+  const isCustom = !presets.includes(value);
+
+  return (
+    <div className="preset-control">
+      <span>{label}</span>
+      <div className="preset-row">
+        <div className="preset-buttons">
+          {presets.map((preset) => (
+            <button
+              className="preset-button"
+              data-active={value === preset}
+              key={preset}
+              onClick={() => onChange(preset)}
+            >
+              {preset}
+            </button>
+          ))}
+        </div>
+        <label className="custom-value">
+          <span>Fritt</span>
+          <input
+            inputMode="numeric"
+            pattern="[0-9]*"
+            type="text"
+            value={value}
+            data-custom={isCustom}
+            onChange={(event) => onChange(Math.max(minimum, Number(event.target.value)))}
+          />
+        </label>
+      </div>
+    </div>
   );
 }
 

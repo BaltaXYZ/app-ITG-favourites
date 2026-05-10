@@ -128,6 +128,78 @@ button {
   gap: 14px;
 }
 
+.preset-control {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.preset-control:first-of-type {
+  margin-top: 0;
+}
+
+.preset-control > span {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.preset-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 92px;
+  gap: 8px;
+  align-items: center;
+}
+
+.preset-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.preset-button {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-strong);
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.preset-button[data-active="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.custom-value {
+  display: grid;
+  gap: 4px;
+}
+
+.custom-value span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.custom-value input {
+  min-height: 40px;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 9px;
+  background: var(--paper-strong);
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.custom-value input[data-custom="true"] {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
 .field {
   display: grid;
   gap: 7px;
@@ -491,6 +563,7 @@ button {
   }
 
   .form-grid,
+  .preset-row,
   .segment-row,
   .session-top {
     grid-template-columns: 1fr;
