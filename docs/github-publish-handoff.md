@@ -8,17 +8,25 @@ Det här dokumentet innehåller den information en ny Codex-tråd behöver för 
 - Git-branch: `main`
 - Föreslaget GitHub-repo: `app-ITG-favourites`
 - Föreslagen synlighet: publikt repo
-- Senast kontrollerad lokal Git-status: ren arbetskopia
-- Senaste lokala commit vid denna handoff: `92bdd39 Add pass management flow`
+- Publicerat GitHub-repo: `https://github.com/BaltaXYZ/app-ITG-favourites`
+- Senast kontrollerad lokal Git-status: ren arbetskopia efter push
+- Senaste lokala commit vid första publicering: `f701e84 Add GitHub publish handoff`
 - Git-användare i lokal config:
   - `user.name`: `BaltaXYZ`
   - `user.email`: `baltafamiljen3@gmail.com`
 
 ## Nuvarande GitHub-läge
 
-Det finns ingen GitHub-remote i repo:t just nu. `git remote -v` ger ingen output.
+Repo:t är nu kopplat till GitHub:
 
-`gh` CLI finns inte installerat i miljön just nu. Publicering behöver därför antingen göras via GitHubs webbgränssnitt eller efter att `gh` installerats/loggats in.
+```bash
+origin  https://github.com/BaltaXYZ/app-ITG-favourites.git (fetch)
+origin  https://github.com/BaltaXYZ/app-ITG-favourites.git (push)
+```
+
+`main` trackar `origin/main`.
+
+`gh` CLI finns inte installerat i miljön just nu. Vid framtida publicering räcker vanlig `git push` så länge HTTPS-autentiseringen fortsätter fungera.
 
 ## Inloggning
 
@@ -29,7 +37,7 @@ Det finns ingen GitHub-remote i repo:t just nu. `git remote -v` ger ingen output
 
 Spara inte lösenord, tokens eller 2FA-koder i projektfiler.
 
-## Skapa repo via GitHub-webben
+## Skapa repo via GitHub-webben om det behöver göras om
 
 1. Gå till `https://github.com/new`.
 2. Repository name: `app-ITG-favourites`
@@ -40,7 +48,7 @@ Spara inte lösenord, tokens eller 2FA-koder i projektfiler.
    - ingen license
 5. När repo:t är skapat, kopiera repo-URL:en.
 
-## Koppla lokal repo och pusha
+## Koppla lokal repo och pusha om remote saknas
 
 Kör från projektmappen:
 
