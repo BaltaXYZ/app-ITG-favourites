@@ -533,6 +533,7 @@ function StartView({
             value={targetMinutes}
             presets={targetMinutePresets}
             minimum={1}
+            showCustom={false}
             onChange={onTargetMinutesChange}
           />
           <PresetInput
@@ -540,6 +541,7 @@ function StartView({
             value={warmupSongCount}
             presets={warmupSongPresets}
             minimum={0}
+            showCustom={false}
             onChange={onWarmupSongCountChange}
           />
         </section>
@@ -587,12 +589,14 @@ function PresetInput({
   value,
   presets,
   minimum,
+  showCustom = true,
   onChange
 }: {
   label: string;
   value: number;
   presets: number[];
   minimum: number;
+  showCustom?: boolean;
   onChange: (value: number) => void;
 }) {
   const isCustom = !presets.includes(value);
@@ -613,17 +617,19 @@ function PresetInput({
             </button>
           ))}
         </div>
-        <label className="custom-value">
-          <span>Fritt</span>
-          <input
-            inputMode="numeric"
-            pattern="[0-9]*"
-            type="text"
-            value={value}
-            data-custom={isCustom}
-            onChange={(event) => onChange(Math.max(minimum, Number(event.target.value)))}
-          />
-        </label>
+        {showCustom ? (
+          <label className="custom-value">
+            <span>Fritt</span>
+            <input
+              inputMode="numeric"
+              pattern="[0-9]*"
+              type="text"
+              value={value}
+              data-custom={isCustom}
+              onChange={(event) => onChange(Math.max(minimum, Number(event.target.value)))}
+            />
+          </label>
+        ) : null}
       </div>
     </div>
   );

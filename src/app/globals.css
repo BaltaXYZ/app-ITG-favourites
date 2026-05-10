@@ -242,6 +242,10 @@ button {
   gap: 6px;
 }
 
+.preset-row > .preset-buttons:only-child {
+  grid-column: 1 / -1;
+}
+
 .preset-button {
   min-height: 40px;
   border: 1px solid var(--line);
