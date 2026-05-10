@@ -1,21 +1,21 @@
 :root {
-  --bg: #f3f0e8;
-  --ink: #181816;
-  --muted: #626058;
-  --line: #d7d0c2;
-  --paper: #fffaf0;
-  --paper-strong: #ffffff;
-  --accent: #006d77;
-  --accent-dark: #004b52;
-  --accent-soft: #d7eff0;
-  --danger: #b42318;
+  --bg: #070b17;
+  --ink: #f4f8ff;
+  --muted: #b8c4da;
+  --line: rgba(166, 207, 255, 0.24);
+  --paper: rgba(11, 18, 36, 0.84);
+  --paper-strong: rgba(16, 28, 54, 0.95);
+  --accent: #00d7ff;
+  --accent-dark: #77f1ff;
+  --accent-soft: rgba(0, 215, 255, 0.18);
+  --danger: #ff7065;
   --warning: #c77800;
   --ok: #236f3a;
   --level-9: #2f6f4e;
   --level-10: #006d77;
   --level-11: #6f4aa8;
   --level-12-13: #b54708;
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 * {
@@ -25,7 +25,7 @@
 body {
   margin: 0;
   background:
-    linear-gradient(rgba(243, 240, 232, 0.9), rgba(243, 240, 232, 0.94)),
+    linear-gradient(rgba(7, 11, 23, 0.75), rgba(7, 11, 23, 0.88)),
     url("/dance-mat-bg.svg") center / cover fixed;
   color: var(--ink);
   font-family:
@@ -49,14 +49,16 @@ button {
   display: grid;
   grid-template-columns: minmax(280px, 390px) minmax(0, 1fr);
   background:
-    linear-gradient(rgba(243, 240, 232, 0.88), rgba(243, 240, 232, 0.94)),
+    linear-gradient(rgba(7, 11, 23, 0.72), rgba(7, 11, 23, 0.9)),
     url("/dance-mat-bg.svg") center / cover fixed;
 }
 
 .sidebar {
   border-right: 1px solid var(--line);
-  background: #ebe5d7;
+  background: rgba(5, 10, 24, 0.86);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.08);
   padding: 24px;
+  backdrop-filter: blur(8px);
 }
 
 .brand {
@@ -82,6 +84,7 @@ button {
   margin: 0;
   font-size: 1.4rem;
   line-height: 1.15;
+  text-shadow: 0 0 12px rgba(0, 215, 255, 0.45);
 }
 
 .brand p {
@@ -105,7 +108,9 @@ button {
   place-items: start center;
   padding: 32px 20px;
   background:
-    linear-gradient(rgba(243, 240, 232, 0.84), rgba(243, 240, 232, 0.92)),
+    radial-gradient(circle at 18% 12%, rgba(0, 215, 255, 0.16), transparent 28%),
+    radial-gradient(circle at 82% 78%, rgba(120, 70, 190, 0.18), transparent 30%),
+    linear-gradient(rgba(7, 11, 23, 0.68), rgba(7, 11, 23, 0.9)),
     url("/dance-mat-bg.svg") center / cover fixed;
 }
 
@@ -140,7 +145,9 @@ button {
   min-height: 86px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--paper);
+  background:
+    linear-gradient(90deg, rgba(0, 215, 255, 0.12), transparent 38%),
+    var(--paper);
   color: var(--ink);
   cursor: pointer;
   display: flex;
@@ -153,8 +160,12 @@ button {
 
 .start-template-button[data-active="true"] {
   border-color: var(--accent);
-  background: var(--accent-soft);
-  box-shadow: inset 0 0 0 1px var(--accent);
+  background:
+    linear-gradient(90deg, rgba(0, 215, 255, 0.25), rgba(111, 74, 168, 0.2)),
+    var(--paper-strong);
+  box-shadow:
+    inset 0 0 0 1px var(--accent),
+    0 0 24px rgba(0, 215, 255, 0.16);
 }
 
 .start-template-button strong {
@@ -269,6 +280,7 @@ button {
   border-color: var(--accent);
   background: var(--accent-soft);
   color: var(--accent-dark);
+  box-shadow: 0 0 18px rgba(0, 215, 255, 0.18);
 }
 
 .custom-value {
@@ -425,7 +437,9 @@ button {
 
 .template-card[data-active="true"] {
   border-color: var(--accent);
-  box-shadow: inset 0 0 0 1px var(--accent);
+  box-shadow:
+    inset 0 0 0 1px var(--accent),
+    0 0 18px rgba(0, 215, 255, 0.13);
 }
 
 .template-card h3 {
@@ -557,12 +571,13 @@ button {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1px;
-  background: #2b302c;
+  background: rgba(166, 207, 255, 0.24);
 }
 
 .metric {
-  background: #1d211e;
+  background: rgba(6, 12, 28, 0.88);
   padding: 18px;
+  backdrop-filter: blur(8px);
 }
 
 .metric span {
@@ -622,7 +637,9 @@ button {
   justify-content: space-between;
   gap: 12px;
   padding: 22px;
-  border-top: 1px solid #343b35;
+  border-top: 1px solid rgba(166, 207, 255, 0.24);
+  background: rgba(6, 12, 28, 0.72);
+  backdrop-filter: blur(8px);
 }
 
 .session-bottom .primary-button {
@@ -686,6 +703,7 @@ button {
   padding: 12px;
   border: 1px dashed var(--line);
   border-radius: 8px;
+  background: rgba(16, 28, 54, 0.35);
 }
 
 @media (max-width: 860px) {
