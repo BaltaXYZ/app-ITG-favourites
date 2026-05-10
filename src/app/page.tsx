@@ -1002,6 +1002,9 @@ function SessionView({
       </section>
 
       <div className="session-bottom">
+        <button className="primary-button" onClick={onComplete} disabled={paused}>
+          <Check size={22} /> {targetReached ? "Klar - avsluta pass" : "Klar - nästa låt"}
+        </button>
         <div className="button-row">
           <button className="ghost-button" onClick={onPause}>
             {paused ? <Play size={18} /> : <Pause size={18} />}
@@ -1011,9 +1014,6 @@ function SessionView({
             Avsluta
           </button>
         </div>
-        <button className="primary-button" onClick={onComplete} disabled={paused}>
-          <Check size={22} /> {targetReached ? "Klar - avsluta pass" : "Klar - nästa låt"}
-        </button>
       </div>
     </main>
   );
