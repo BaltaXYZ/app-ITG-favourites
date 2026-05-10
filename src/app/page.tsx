@@ -11,6 +11,7 @@ import {
   Plus,
   Save,
   Shuffle,
+  SlidersHorizontal,
   Trash2
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -35,6 +36,7 @@ import {
 import { DIFFICULTIES, type Difficulty, type PassPlan, type PassSegment, type PassSession, type SegmentStrategy, type Song } from "../lib/types";
 
 type BuilderMode = "templates" | "custom";
+type AppView = "start" | "advanced";
 type StrategyType = SegmentStrategy["type"];
 
 type CustomSegmentDraft = {
@@ -203,6 +205,7 @@ function clonePlanForRun(plan: PassPlan, overrides: { targetMinutes: number; war
 }
 
 export default function Home() {
+  const [appView, setAppView] = useState<AppView>("start");
   const [builderMode, setBuilderMode] = useState<BuilderMode>("templates");
   const [targetMinutes, setTargetMinutes] = useState(60);
   const [warmupSongCount, setWarmupSongCount] = useState(4);
@@ -255,6 +258,11 @@ export default function Home() {
     setSelectedTemplateId(plan.id);
     setTargetMinutes(plan.targetMinutes);
     setWarmupSongCount(plan.warmupSongCount);
+  }
+
+  function selectTemplate(plan: PassPlan) {
+    setBuilderMode("templates");
+    setSelectedTemplateId(plan.id);
   }
 
   function startCurrentPass(plan = activePlan) {
@@ -328,6 +336,22 @@ export default function Home() {
     );
   }
 
+  if (appView === "start") {
+    return (
+      <StartView
+        targetMinutes={targetMinutes}
+        warmupSongCount={warmupSongCount}
+        selectedTemplate={selectedTemplate}
+        selectedTemplateId={selectedTemplateId}
+        onTargetMinutesChange={setTargetMinutes}
+        onWarmupSongCountChange={setWarmupSongCount}
+        onTemplateSelect={selectTemplate}
+        onStart={() => startCurrentPass(clonePlanForRun(selectedTemplate, { targetMinutes, warmupSongCount }))}
+        onAdvanced={() => setAppView("advanced")}
+      />
+    );
+  }
+
   return (
     <main className="app-shell">
       <aside className="sidebar">
@@ -339,6 +363,12 @@ export default function Home() {
             <h1>ITG Favourites</h1>
             <p>Timerstyrda danspass för dansmatta</p>
           </div>
+        </div>
+
+        <div className="section">
+          <button className="ghost-button full-width-button" onClick={() => setAppView("start")}>
+            Till startsidan
+          </button>
         </div>
 
         <div className="section">
@@ -455,6 +485,99 @@ export default function Home() {
           {finishedSession ? <FinishedSummary session={finishedSession} /> : null}
         </div>
       </section>
+    </main>
+  );
+}
+
+function StartView({
+  targetMinutes,
+  warmupSongCount,
+  selectedTemplate,
+  selectedTemplateId,
+  onTargetMinutesChange,
+  onWarmupSongCountChange,
+  onTemplateSelect,
+  onStart,
+  onAdvanced
+}: {
+  targetMinutes: number;
+  warmupSongCount: number;
+  selectedTemplate: PassPlan;
+  selectedTemplateId: string;
+  onTargetMinutesChange: (value: number) => void;
+  onWarmupSongCountChange: (value: number) => void;
+  onTemplateSelect: (template: PassPlan) => void;
+  onStart: () => void;
+  onAdvanced: () => void;
+}) {
+  const startTemplates = [templates[0], templates[1], createProgressiveTopTemplate("11")];
+
+  return (
+    <main className="start-page">
+      <div className="start-shell">
+        <header className="start-header">
+          <div className="brand">
+            <div className="brand-mark" aria-hidden="true">
+              <Activity size={26} />
+            </div>
+            <div>
+              <h1>ITG Favourites</h1>
+              <p>Bygg ett danspass och starta direkt</p>
+            </div>
+          </div>
+        </header>
+
+        <section className="start-controls" aria-label="Passinställningar">
+          <PresetInput
+            label="Mål­tid, minuter"
+            value={targetMinutes}
+            presets={targetMinutePresets}
+            minimum={1}
+            onChange={onTargetMinutesChange}
+          />
+          <PresetInput
+            label="Uppvärmningslåtar"
+            value={warmupSongCount}
+            presets={warmupSongPresets}
+            minimum={0}
+            onChange={onWarmupSongCountChange}
+          />
+        </section>
+
+        <section className="start-template-list" aria-label="Välj danspassupplägg">
+          {startTemplates.map((template) => (
+            <button
+              className="start-template-button"
+              data-active={selectedTemplateId === template.id}
+              key={template.id}
+              onClick={() => onTemplateSelect(template)}
+            >
+              <span>
+                <strong>{template.name}</strong>
+                <small>{templateShortDescription(template)}</small>
+              </span>
+              <span className="template-meta">
+                {template.segments
+                  .flatMap((segment) => difficultiesInStrategy(segment.strategy))
+                  .map((difficulty, index) => (
+                    <span className={levelClass(difficulty)} key={`${template.id}-${difficulty}-${index}`}>
+                      {difficulty}
+                    </span>
+                  ))}
+              </span>
+            </button>
+          ))}
+        </section>
+
+        <section className="start-actions">
+          <button className="primary-button start-button" onClick={onStart}>
+            <Play size={22} /> Starta
+          </button>
+          <button className="ghost-button" onClick={onAdvanced}>
+            <SlidersHorizontal size={18} /> Avancerade inställningar
+          </button>
+        </section>
+      </div>
     </main>
   );
 }
@@ -900,6 +1023,10 @@ function templateDescription(template: PassPlan) {
       return `${formatStrategy(segment.strategy)} till ${until}`;
     })
     .join(". ");
+}
+
+function templateShortDescription(template: PassPlan) {
+  return template.segments.map((segment) => formatStrategy(segment.strategy)).join(" / ");
 }
 
 function difficultiesInStrategy(strategy: SegmentStrategy): Difficulty[] {
