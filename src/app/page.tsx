@@ -384,7 +384,7 @@ export default function Home() {
             onChange={setTargetMinutes}
           />
           <PresetInput
-            label="Uppvärmningslåtar"
+            label="Antal uppvärmningslåtar"
             value={warmupSongCount}
             presets={warmupSongPresets}
             minimum={0}
@@ -536,7 +536,7 @@ function StartView({
             onChange={onTargetMinutesChange}
           />
           <PresetInput
-            label="Uppvärmningslåtar"
+            label="Antal uppvärmningslåtar"
             value={warmupSongCount}
             presets={warmupSongPresets}
             minimum={0}
