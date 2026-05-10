@@ -1092,6 +1092,17 @@ function PlanSegmentTimeline({
 }) {
   return (
     <span className="segment-map" aria-label="Passdelar">
+      {plan.warmupSongCount > 0 ? (
+        <span
+          className="segment-badge-group"
+          data-active={activeSegmentId === "warmup"}
+          key={`${plan.id}-warmup`}
+        >
+          <span className="segment-levels" aria-label="Uppvärmning">
+            <span className="level-pill level-warmup">U</span>
+          </span>
+        </span>
+      ) : null}
       {plan.segments.map((segment) => (
         <span
           className="segment-badge-group"
@@ -1132,7 +1143,7 @@ function SessionView({
   const targetReached = hasReachedTarget(session, nowMs);
   const current = session.currentItem;
   const activeSegment = activeSegmentAt(session.plan, elapsedMs / 60_000);
-  const activeSegmentId = current?.type === "song" ? activeSegment.id : undefined;
+  const activeSegmentId = current?.type === "warmup" ? "warmup" : activeSegment.id;
   const currentTitle = current?.type === "warmup" ? current.label : current?.song.title;
   const ordinalLabel = current?.type === "warmup" ? `Uppvärmning ${current.ordinal}` : `Låt ${current?.ordinal ?? 1}`;
 
