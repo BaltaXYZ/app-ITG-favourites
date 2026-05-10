@@ -148,7 +148,15 @@ button {
 }
 
 .start-header {
-  padding-bottom: 4px;
+  padding: 14px;
+  border: 1px solid rgba(244, 248, 255, 0.28);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(0, 215, 255, 0.18), rgba(111, 74, 168, 0.18)),
+    rgba(6, 12, 28, 0.74);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 24px rgba(0, 215, 255, 0.1);
 }
 
 .start-header .brand {
@@ -727,13 +735,17 @@ button {
 
 .song-title {
   margin: 0;
+  width: 100%;
+  min-width: 0;
   max-width: 100%;
   font-size: clamp(1.65rem, 4.2vw, 3.8rem);
   font-weight: 900;
   line-height: 1.02;
   letter-spacing: 0;
   text-shadow: 0 0 14px rgba(0, 215, 255, 0.45);
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .song-artist {
@@ -752,20 +764,23 @@ button {
   min-height: 68px;
   justify-self: center;
   padding-inline: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.28), transparent 48%),
+    linear-gradient(90deg, #4ec784, var(--level-9));
   font-size: clamp(1.05rem, 2.8vw, 1.35rem);
-  box-shadow: 0 0 24px rgba(0, 215, 255, 0.22);
+  box-shadow: 0 0 24px rgba(78, 199, 132, 0.26);
 }
 
 .session-bottom {
   display: grid;
-  padding: 16px 22px 20px;
+  padding: 18px 22px 20px;
   border-top: 1px solid rgba(166, 207, 255, 0.24);
   background: rgba(6, 12, 28, 0.72);
   backdrop-filter: blur(8px);
 }
 
 .session-bottom .button-row {
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 .history {
@@ -973,7 +988,7 @@ button {
   }
 
   .session-next-action {
-    padding: 0 14px 10px;
+    padding: 0 14px 18px;
   }
 
   .session-next-action .primary-button {
@@ -981,7 +996,7 @@ button {
   }
 
   .session-bottom {
-    padding: 10px 14px 14px;
+    padding: 16px 14px 14px;
   }
 
   .session-bottom .button-row {

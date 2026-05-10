@@ -13,7 +13,7 @@ import {
   SlidersHorizontal,
   Trash2
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import songData from "../data/songs.json";
 import {
   PASS_TEMPLATES,
@@ -107,6 +107,49 @@ function BrandMark() {
     <div className="brand-mark" aria-hidden="true">
       <span className="itg-arrow-symbol" />
     </div>
+  );
+}
+
+function FittedSongTitle({ title }: { title?: string }) {
+  const titleRef = useRef<HTMLHeadingElement | null>(null);
+
+  useEffect(() => {
+    const titleElement = titleRef.current;
+    const railElement = titleElement?.parentElement;
+    if (!titleElement || !railElement) return;
+
+    let frameId = 0;
+
+    const fitTitle = () => {
+      window.cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(() => {
+        titleElement.style.fontSize = "";
+        const maxSize = Number.parseFloat(window.getComputedStyle(titleElement).fontSize);
+        let nextSize = maxSize;
+        const minSize = 14;
+
+        while (titleElement.scrollWidth > titleElement.clientWidth && nextSize > minSize) {
+          nextSize -= 1;
+          titleElement.style.fontSize = `${nextSize}px`;
+        }
+      });
+    };
+
+    fitTitle();
+
+    const resizeObserver = new ResizeObserver(fitTitle);
+    resizeObserver.observe(railElement);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      resizeObserver.disconnect();
+    };
+  }, [title]);
+
+  return (
+    <h1 className="song-title" ref={titleRef}>
+      {title}
+    </h1>
   );
 }
 
@@ -994,7 +1037,7 @@ function SessionView({
               </div>
             )}
             <div className="song-rail">
-              <h1 className="song-title">{currentTitle}</h1>
+              <FittedSongTitle title={currentTitle} />
             </div>
           </div>
           {current?.type === "song" && current.song.artist ? (
